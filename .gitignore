@@ -1,0 +1,7 @@
+data/raw_videos/
+data/labeled_frames/
+models/*.pt
+outputs/
+venv/
+__pycache__/
+*.pyc
