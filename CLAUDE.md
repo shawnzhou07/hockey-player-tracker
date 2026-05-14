@@ -385,4 +385,4 @@ To retrain v2 exactly as it was:
 4. Train with same hyperparameters documented in `MODEL_INFO.md`
 
 ### Key Principle
-The `data/train/` and `data/val/` folders represent "current working dataset" — they change as you add more data. `models/MODEL_INFO.md` is the source of truth for what each model was trained on.
+The `data/train/` and `data/val/` folders represent "current working dataset" — they change as you add more data. `models/MODEL_INFO.md` is the source of truth for what each model was trained on. 
