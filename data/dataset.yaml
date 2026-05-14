@@ -1,0 +1,6 @@
+path: /Users/shawnzhou07/Desktop/Programming/hockey-player-tracker/data
+train: train/images
+val: val/images
+
+nc: 2
+names: ['team_home', 'team_away']

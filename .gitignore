@@ -1,4 +1,9 @@
-data
+data/raw_videos/
+data/labeled_frames/
+data/train/
+data/val/
+data/annotations/
+runs/
 models/*.pt
 outputs/
 venv/
