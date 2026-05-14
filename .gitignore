@@ -1,5 +1,4 @@
-data/raw_videos/
-data/labeled_frames/
+data
 models/*.pt
 outputs/
 venv/
