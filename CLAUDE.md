@@ -336,3 +336,53 @@ Additional dependencies may be added as needed.
 - Use noun_verb pattern: `frames_extract.py`, `dataset_split.py`, `model_train.py`
 - Be descriptive and consistent
 - Group by domain: frames/dataset operations, model operations, video operations
+
+---
+
+## Dataset Versioning Strategy
+
+### Approach
+We maintain one active `data/train/` and `data/val/` directory for current work. Dataset history and composition is documented in `models/MODEL_INFO.md` rather than duplicating folders.
+
+### Why This Approach
+- No data duplication (v1 frames are subset of v2, no need to store twice)
+- Clean file structure (one `train/` folder, not `train_v1/`, `train_v2/`, `train_v3/`)
+- Full traceability through `MODEL_INFO.md` documentation
+- Disk space efficient
+
+### Documentation in MODEL_INFO.md
+Each model entry documents exactly what data it was trained on:
+
+Example:
+```
+### v2.pt
+- Training Date: 2026-05-14
+- Frames Used: 549 (439 train, 110 val)
+- Source Game: TBL@BUF 2026-03-08
+- Dataset Composition: 96 manually labeled + 453 auto-labeled (corrected)
+- Notes: All frames from single game, dark vs white jersey contrast
+
+### v3.pt (future example)
+- Training Date: 2026-05-20
+- Frames Used: 1500 (1200 train, 300 val)
+- Source Games: TBL@BUF (549 frames), TOR@NYR (300 frames), DET@BOS (300 frames), CHI@MIN (351 frames)
+- Dataset Composition: Mixed jersey colors for better generalization
+- Notes: Multi-game training to handle diverse jersey combinations
+```
+
+### Workflow for Adding New Data
+1. Extract and label frames from new game(s)
+2. Add new annotations to `data/annotations/`
+3. Run `dataset_split.py` to regenerate train/val split with ALL frames (old + new)
+4. Train new model version
+5. Update `models/MODEL_INFO.md` with the new dataset composition
+
+### Reproducing Old Models
+To retrain v2 exactly as it was:
+1. Check `models/MODEL_INFO.md` for v2 dataset details
+2. Filter `data/annotations/` to only include those 549 frames
+3. Run `dataset_split.py` on filtered set
+4. Train with same hyperparameters documented in `MODEL_INFO.md`
+
+### Key Principle
+The `data/train/` and `data/val/` folders represent "current working dataset" — they change as you add more data. `models/MODEL_INFO.md` is the source of truth for what each model was trained on.
