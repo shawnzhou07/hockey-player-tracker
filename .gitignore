@@ -3,9 +3,13 @@ data/labeled_frames/
 data/train/
 data/val/
 data/annotations/
-runs/
+data/annotations_backup/
 models/*.pt
+runs/
 outputs/
 venv/
 __pycache__/
 *.pyc
+.DS_Store
+*.cache
+yolov8n.pt

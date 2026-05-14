@@ -318,4 +318,21 @@ Additional dependencies may be added as needed.
 
 ---
 
-**Last Updated:** 2025-05-13
+**Last Updated:** 2026-05-14
+
+---
+
+## Project Structure & Conventions
+
+### Directory Organization
+
+- `data/annotations/` — YOLO-format label `.txt` files (corrected, source of truth)
+- `models/` — Trained `.pt` model weights; see `models/MODEL_INFO.md` for version history
+- `src/` — All Python scripts (see naming convention below)
+- `runs/detect/` — Training run artifacts; keep final run for reference, delete predict* artifacts
+- `outputs/` — Annotated videos and stats CSVs (gitignored)
+
+### Script Naming Convention
+- Use noun_verb pattern: `frames_extract.py`, `dataset_split.py`, `model_train.py`
+- Be descriptive and consistent
+- Group by domain: frames/dataset operations, model operations, video operations
