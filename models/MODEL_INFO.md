@@ -4,7 +4,18 @@ This file tracks all trained models and their specifications. **Update this file
 
 ## Model Version Guide
 
-### v2.pt (CURRENT PRODUCTION MODEL)
+### v3.pt (CURRENT PRODUCTION MODEL)
+- **Training Date:** 2026-05-14
+- **Frames Used:** 82 (66 train, 16 val)
+- **Source Game:** TBL@BUF 2026-03-08
+- **Epochs Trained:** 50
+- **Performance:** TBD (training metrics not yet recorded)
+- **Classes (15):** team_home, team_away, corner_left_far, corner_right_far, blue_line_left_board, blue_line_right_board, center_line_board, dot_end_left_far, dot_end_left_close, dot_end_right_far, dot_end_right_close, dot_neutral_left_far, dot_neutral_left_close, dot_neutral_right_far, dot_neutral_right_close
+- **Notes:** First model with rink feature detection. Enables homography-based calibration for real-world speed/distance analytics. Small training set (82 frames) — rink features may miss in unusual lighting or angles. Use with `video_inference_deepsort_analytics.py`.
+
+---
+
+### v2.pt
 - **Training Date:** 2026-05-14
 - **Frames Used:** 549 (439 train, 110 val)
 - **Source Game:** TBL@BUF 2026-03-08

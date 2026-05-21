@@ -5,7 +5,7 @@ from deep_sort_realtime.deepsort_tracker import DeepSort # deepsort tracker
 import numpy as np # for homography calculations
 
 def run_inference(video_path, model_path, output_csv):
-    print("DEBUG: Function started")
+
     model = YOLO(model_path) # load trained model
     
     cap = cv2.VideoCapture(video_path) # open video file

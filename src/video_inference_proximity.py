@@ -98,6 +98,7 @@ def run_inference(video_path, model_path, output_csv):
     
     # create dataframe and export to CSV
     df = pd.DataFrame(ice_time_data)
+    df = df[df['Frames_Detected'] >= 30] # filter out noise (players with < 1 second screen time)
     df = df.sort_values('Screen_Time_Seconds', ascending=False) # sort by most ice time first
     df.to_csv(output_csv, index=False)
     
@@ -108,5 +109,5 @@ def run_inference(video_path, model_path, output_csv):
 run_inference(
     video_path='data/raw_videos/TBL@BUF_2026-03-08_clip_00-05-15_to_00-07-13.mp4',
     model_path='models/v2.pt',
-    output_csv='outputs/ice_time_TBL@BUF_2026-03-08_clip_00-05-15_to_00-07-13.csv'
+    output_csv='outputs/ice_time_TBL@BUF_2026-03-08_clip_00-05-15_to_00-07-13_proxmity.csv'
 )

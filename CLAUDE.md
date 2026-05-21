@@ -1,27 +1,30 @@
 # HockeyPlayerTracker
 
-**Goal:** Track hockey players in game footage, calculate ice time per player, and output annotated video with tracking overlays.
+**Goal:** Track hockey players in game footage, calculate ice time and movement analytics (speed, distance) per player using homography-based calibration, and output annotated video with tracking overlays.
 
 ---
 
 ## Project Overview
 
 An object detection and tracking system that:
-1. Detects players in hockey game video
-2. Tracks each player across frames with persistent IDs
-3. Differentiates teams by jersey color
-4. Calculates ice time statistics per player
-5. Outputs video with real-time overlays showing tracking IDs
+1. Detects players and rink features in hockey game video (15-class YOLOv8 model)
+2. Tracks each player across frames with persistent IDs using DeepSORT
+3. Differentiates teams by jersey color (class-based at detection time)
+4. Computes homography from detected rink features to map screen → ice coordinates (meters)
+5. Calculates per-player analytics: screen time, avg/max speed (km/h), total distance (m)
+6. Outputs CSV with player stats and annotated video with tracking overlays
 
 **Timeline:** 3-4 weeks
 
-**Current Status:** Planning phase
+**Current Status:** Active development — tracking + analytics pipeline complete
 
 ---
 
 ## Architecture (High-Level)
 
-Raw Video Input → Player Detection (YOLOv8) → Multi-Object Tracking (BoT-SORT or similar) → Team Classification (Color-based) → Ice Time Analytics (Frame counting) → Video Output (Annotated with overlays)
+Raw Video Input → YOLOv8 Detection (15 classes: 2 player + 13 rink features) → DeepSORT Tracking (persistent player IDs) → Homography Calibration (rink features → ice coordinates) → Analytics (screen time, speed, distance) → CSV Output + Annotated Video
+
+**Homography approach:** Each frame, detected rink feature positions (screen pixels) are matched to their known NHL rink coordinates (meters). If ≥ 3 features are detected, `cv2.findHomography` computes a perspective transform matrix. Player foot positions are then projected into real-world ice coordinates for accurate speed/distance measurement. Falls back to a fixed pixel-to-meter constant (`0.03 m/px`) when fewer than 3 features are visible.
 
 ---
 
@@ -33,14 +36,21 @@ Raw Video Input → Player Detection (YOLOv8) → Multi-Object Tracking (BoT-SOR
 - OpenCV - Video processing
 - NumPy/Pandas - Data manipulation
 
-### Tracking (To Be Decided)
-- BoT-SORT (built into YOLOv8) - Multi-object tracking
-- OR DeepSORT - Alternative tracking algorithm
-- Decision: Start with BoT-SORT (simpler integration)
+### Tracking
+- DeepSORT (`deep-sort-realtime`) — chosen over BoT-SORT for better re-ID across occlusions
+- MobileNet embedder for appearance features
+- Parameters: `max_age=30`, `n_init=3`
 
 ### Team Differentiation
-- Color-based classification using jersey hue/saturation
-- May use simple k-means clustering or manual thresholds
+- Class-based at detection time: `team_home` (class 0) vs `team_away` (class 1)
+- Determined by YOLO detection, not post-hoc color analysis
+
+### Calibration & Analytics
+- Homography via `cv2.findHomography` using 13 labeled rink features
+- NHL rink coordinates hardcoded in meters (origin = center ice)
+- Fallback constant: `0.03 m/px` when < 3 rink features detected
+- Speed computed frame-to-frame from ice coordinates, converted to km/h
+- Distance accumulated across all confirmed position steps
 
 ### Visualization
 - Matplotlib - Charts/analytics
@@ -219,16 +229,18 @@ These are ideas for future development, NOT required for initial version:
 **Current assumptions:**
 - Only tracking players, not puck or refs
 - Teams must have clearly different jersey colors
-- Requires broadcast-angle footage (not behind-net or corner views)
+- Requires broadcast-angle footage for rink feature visibility
 - No real-time processing (offline only)
 - No player identity (just tracking IDs, not real names)
+- Homography assumes a mostly static camera angle
 
-**Expected challenges:**
-- Occlusions when players overlap
-- ID switching when players cross paths
-- Jersey color similarity in certain lighting
-- Fast camera pans may lose tracks
-- Players entering/leaving frame
+**Known challenges:**
+- Occlusions when players overlap cause ID switches in DeepSORT
+- Camera pans reduce visible rink features → homography degrades → falls back to fixed constant
+- Fallback pixel-to-meter ratio (`0.03 m/px`) is an approximation; speed/distance accuracy degrades when homography unavailable
+- v3 model trained on only 82 frames — rink feature detection may miss features in unusual lighting or angles
+- Speed spikes occur when DeepSORT re-assigns IDs (jumps look like large position changes)
+- Frame skipping (every other frame) doubles apparent displacement; speed calculations account for this via timestamp delta but fast movements may be undersampled
 
 ---
 
@@ -252,24 +264,29 @@ These are ideas for future development, NOT required for initial version:
 
 HockeyPlayerTracker/
 ├── data/
-│   ├── raw_videos/           # Downloaded YouTube clips
-│   ├── labeled_frames/       # Extracted frames for labeling
-│   │   ├── train/
-│   │   └── val/
-│   └── annotations/          # YOLO format labels
+│   ├── raw_videos/                    # Source video clips (gitignored)
+│   ├── labeled_frames_players/        # Frames labeled for player-only model
+│   ├── labeled_frames_players_arena/  # Frames labeled for 15-class model
+│   ├── players/                       # Train/val split for player-only data
+│   ├── players_arena/                 # Train/val split for 15-class data (active)
+│   ├── annotations/                   # YOLO-format .txt label files (source of truth)
+│   └── dataset.yaml                   # Points to players_arena/, 15 classes
 ├── models/
-│   └── player_detector.pt    # Trained YOLOv8 model
+│   ├── v1.pt                          # Player-only, 96 frames, manually labeled
+│   ├── v2.pt                          # Player-only, 549 frames, auto+manual labeled
+│   ├── v3.pt                          # 15-class (players + rink features), 82 frames
+│   └── MODEL_INFO.md                  # Training history and dataset documentation
 ├── src/
-│   ├── train.py             # Model training script
-│   ├── track.py             # Tracking pipeline
-│   ├── analytics.py         # Ice time calculations
-│   └── visualize.py         # Video annotation
-├── outputs/
-│   ├── tracked_videos/      # Annotated output videos
-│   └── stats/               # CSV files with analytics
+│   ├── frames_extract.py              # Extract frames from raw video
+│   ├── dataset_split.py               # Build train/val split from annotations
+│   ├── model_train.py                 # Train YOLOv8 model
+│   ├── model_auto_label.py            # Auto-label frames using existing model
+│   ├── video_inference_deepsort.py    # DeepSORT tracking → screen time CSV
+│   ├── video_inference_deepsort_analytics.py  # DeepSORT + homography → full analytics CSV
+│   └── video_inference_proximity.py   # Proximity-based tracking (legacy/baseline)
+├── outputs/                           # Annotated videos and CSVs (gitignored)
 ├── requirements.txt
-├── README.md
-└── PROJECT.md               # This file
+└── README.md
 
 ---
 
@@ -290,14 +307,22 @@ Additional dependencies may be added as needed.
 
 ## Notes & Decisions Log
 
-**2025-05-13:**
+**2026-05-14:**
+- Switched tracker from BoT-SORT to DeepSORT (`deep-sort-realtime`) — better appearance re-ID
+- Extended YOLO model from 2 to 15 classes: added 13 rink feature landmarks for homography
+- Implemented homography-based calibration: screen pixels → NHL ice coordinates (meters)
+- Analytics pipeline complete: speed (avg/max km/h), distance (m), screen time (s) per player
+- Output CSV columns: `Player_ID`, `Team`, `Screen_Time_s`, `Avg_Speed_kmh`, `Max_Speed_kmh`, `Total_Distance_m`, `Frames_Detected`
+- Trained v3 model on 82 frames with all 15 classes
+- Team classification moved to detection-time class label (not post-hoc color analysis)
+
+**2026-05-13:**
 - Project scope defined: ice time tracking with team differentiation
 - Timeline: 3-4 weeks
 - Approach: Start simple, iterate
-- Team classification: Color-based (not OCR)
-- Tracking: BoT-SORT (built into YOLOv8)
+- Tracking: BoT-SORT (initial decision, later switched to DeepSORT)
 - Hardware: M4 MacBook with MPS acceleration
-- Data: 3-5 YouTube clips, 300-500 labeled frames
+- Data: TBL@BUF 2026-03-08 broadcast clip
 
 ---
 
