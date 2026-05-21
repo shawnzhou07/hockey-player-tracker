@@ -4,6 +4,10 @@ data/train/
 data/val/
 data/annotations/
 data/annotations_backup/
+data/players
+data/players_arena
+data/labeled_frames_players_arena
+data/labeled_frames_players
 models/*.pt
 runs/
 outputs/

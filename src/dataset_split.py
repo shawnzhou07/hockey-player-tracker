@@ -1,4 +1,4 @@
-import os # creates directories, handles file paths
+import os
 import shutil # copies files
 import random # shuffles lists
 
@@ -48,8 +48,8 @@ def split_dataset(annotations_dir, images_dir, train_dir, val_dir, split_ratio=0
 
 # call the function
 split_dataset(
-    annotations_dir="data/annotations",
-    images_dir="data/labeled_frames/TBL@BUF_2026-03-08",
-    train_dir="data/train",
-    val_dir="data/val"
+    annotations_dir="data/labeled_frames_players_arena",
+    images_dir="data/labeled_frames_players/TBL@BUF_2026-03-08",
+    train_dir="data/players_arena/train",
+    val_dir="data/players_arena/val"
 )

@@ -1,5 +1,5 @@
-import cv2 # opencv - reads videos, saves images
-import os # creates directories, handles file paths
+import cv2
+import os
 
 def extract_frames_from_range(video_path, output_dir, start_time, end_time, sample_rate=15):
     

@@ -1,6 +1,21 @@
-path: /Users/shawnzhou07/Desktop/Programming/hockey-player-tracker/data
+path: /Users/shawnzhou07/Desktop/Programming/hockey-player-tracker/data/players_arena
 train: train/images
 val: val/images
 
-nc: 2
-names: ['team_home', 'team_away']
+nc: 15
+names: 
+  - team_home
+  - team_away
+  - corner_left_far
+  - corner_right_far
+  - blue_line_left_board
+  - blue_line_right_board
+  - center_line_board
+  - dot_end_left_far
+  - dot_end_left_close
+  - dot_end_right_far
+  - dot_end_right_close
+  - dot_neutral_left_far
+  - dot_neutral_left_close
+  - dot_neutral_right_far
+  - dot_neutral_right_close
